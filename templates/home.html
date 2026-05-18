@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Hệ thống gợi ý phim</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link href="https://fonts.googleapis.com/css?family=IBM+Plex+Sans&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tarekraafat/autocomplete.js@7.2.0/dist/css/autoComplete.min.css">
+  <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='style.css') }}">
+  <script type="text/javascript">
+    var films = {{suggestions|tojson}};
+  </script>
+</head>
+
+<body id="content" style="font-family: 'Noto Sans JP', sans-serif;">
+	<div class="ml-container" style="display: block;">
+    <center><h1 style=""> Hệ thống gợi ý phim</h1></center>
+    <div class="form-group shadow-textarea" style="margin-top: 30px;text-align: center;color: white;">
+        <input type="text" name="movie" class="movie form-control" id="autoComplete" autocomplete="off" placeholder="Nhập tên phim" style="background-color: #ffffff;border-color:#ffffff;width: 60%;color: #181818" required="required" />
+        <br>
+    </div>
+
+    <div class="form-group" style="text-align: center;">
+      <button class="btn btn-primary btn-block movie-button" style="background-color: #e50914;text-align: center;border-color: #e50914;width:120px;" disabled="true" >Tìm kiếm</button><br><br>
+    </div>
+	</div>
+
+  <div class="fail">
+    <center><h3>Xin lỗi! Bộ phim bạn yêu cầu không có trong cơ sở dữ liệu</h3></center>
+  </div>
+
+	<div class="results">
+    <center>
+      <h2 id="name" class="text-uppercase"></h2>
+    </center>
+	</div>
+
+  <!-- Bắt đầu phần phim ngẫu nhiên -->
+  {% if random_movies %}
+  <div class="random-movies" style="margin-top: 50px;">
+    <center><h2 style="color: white; margin-bottom: 20px;">KHÁM PHÁ PHIM</h2></center>
+    <div class="movie-content" id="random-movies-grid" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; max-width: 1200px; margin: 0 auto;">
+      <!-- Các phim sẽ được JS điền vào đây -->
+    </div>
+  </div>
+  
+  <script type="text/javascript">
+    document.addEventListener("DOMContentLoaded", function() {
+      var randomMovies = {{ random_movies | safe }};
+      var my_api_key = '5ce2ef2d7c461dea5b4e04900d1c561e';
+      var container = document.getElementById('random-movies-grid');
+      
+      randomMovies.forEach(function(title) {
+        $.ajax({
+          type: 'GET',
+          url: 'https://api.themoviedb.org/3/search/movie?api_key='+my_api_key+'&query='+title,
+          success: function(m_data) {
+            var poster_url = 'https://via.placeholder.com/360x240?text=Khong+Co+Anh';
+            if(m_data.results && m_data.results.length > 0 && m_data.results[0].poster_path) {
+              poster_url = 'https://image.tmdb.org/t/p/original' + m_data.results[0].poster_path;
+            }
+            
+            var card = `
+              <div class="card" style="width: 15rem; cursor: pointer;" title="${title}" onclick="recommendcard(this)">
+                <div class="imghvr">
+                  <img class="card-img-top" height="360" width="240" src="${poster_url}" alt="${title} - poster">
+                  <figcaption class="fig">
+                    <button class="card-btn btn btn-danger"> Xem ngay </button>
+                  </figcaption>
+                </div>
+                <div class="card-body">
+                  <h5 class="card-title" style="color: black; font-weight: bold; text-align: center;">${title}</h5>
+                </div>
+              </div>
+            `;
+            container.innerHTML += card;
+          }
+        });
+      });
+    });
+  </script>
+  {% endif %}
+  <!-- Kết thúc phần phim ngẫu nhiên -->
+
+	<script src="https://cdn.jsdelivr.net/npm/@tarekraafat/autocomplete.js@7.2.0/dist/js/autoComplete.min.js"></script>
+  <script type="text/javascript" src="{{url_for('static', filename='autocomplete.js')}}"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script type="text/javascript" src="{{url_for('static', filename='recommend.js')}}"></script>
+  <footer style="text-align: center; color: white; margin-top: 50px; padding: 20px; background-color: #141414;">
+    <p>Đề tài: Hệ thống gợi ý phim</p>
+    <p>Giảng viên hướng dẫn: Đào Thị Thúy Quỳnh</p>
+    <p>Nhóm thực hiện: 05</p>
+    <p>Thành viên: Nguyễn Văn Quân, Võ Thanh Huyền, Trần Hải Hưng, Nguyễn Thành Lâm</p>
+  </footer>
+</body>
+</html>
