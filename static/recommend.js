@@ -63,13 +63,35 @@ function load_details(my_api_key,title){
 function movie_recs(movie_title,movie_id,my_api_key){
   $.ajax({
     type:'POST',
-    url:"/similarity",
+    url:'/similarity',
     data:{'name':movie_title},
     success: function(recs){
-      if(recs=="Sorry! The movie you requested is not in our database. Please check the spelling or try with some other movies"){
-        $('.fail').css('display','block');
-        $('.results').css('display','none');
-        $("#loader").delay(500).fadeOut();
+      if(recs=="Xin lỗi! Bộ phim bạn yêu cầu không có trong cơ sở dữ liệu. Vui lòng kiểm tra lại chính tả hoặc thử với phim khác."){
+        $.ajax({
+          type: 'GET',
+          url: "https://api.themoviedb.org/3/movie/" + movie_id + "/similar?api_key=" + my_api_key,
+          success: function(similar_data) {
+             if(similar_data.results && similar_data.results.length > 0) {
+                var arr = [];
+                var count = Math.min(10, similar_data.results.length);
+                for(var i=0; i<count; i++){
+                  arr.push(similar_data.results[i].title);
+                }
+                $('.fail').css('display','none');
+                $('.results').css('display','block');
+                get_movie_details(movie_id,my_api_key,arr,movie_title);
+             } else {
+                $('.fail').css('display','block');
+                $('.results').css('display','none');
+                $("#loader").delay(500).fadeOut();
+             }
+          },
+          error: function() {
+            $('.fail').css('display','block');
+            $('.results').css('display','none');
+            $("#loader").delay(500).fadeOut();
+          }
+        });
       }
       else {
         $('.fail').css('display','none');
@@ -133,9 +155,24 @@ async function show_details(movie_details,arr,movie_title,my_api_key,movie_id){
     get_individual_cast(movie_cast, my_api_key)
   ]);
   
+  var trailer_key = "";
+  try {
+    var video_data = await $.ajax({
+      type: 'GET',
+      url: "https://api.themoviedb.org/3/movie/" + movie_id + "/videos?api_key=" + my_api_key
+    });
+    for(var i=0; i<video_data.results.length; i++){
+      if(video_data.results[i].type == "Trailer" && video_data.results[i].site == "YouTube"){
+        trailer_key = video_data.results[i].key;
+        break;
+      }
+    }
+  } catch(e) {}
+
   details = {
     'title':movie_title,
-      'cast_ids':JSON.stringify(movie_cast.cast_ids),
+    'trailer_key': trailer_key,
+    'cast_ids':JSON.stringify(movie_cast.cast_ids),
       'cast_names':JSON.stringify(movie_cast.cast_names),
       'cast_chars':JSON.stringify(movie_cast.cast_chars),
       'cast_profiles':JSON.stringify(movie_cast.cast_profiles),
@@ -229,3 +266,90 @@ async function get_movie_posters(arr, my_api_key) {
   });
   return Promise.all(promises);
 }
+
+// ================= WATCHLIST LOGIC =================
+$(document).ready(function() {
+  function updateWatchlistButtons() {
+    var watchlist = JSON.parse(localStorage.getItem('movieWatchlist')) || [];
+    $('.btn-watchlist').each(function() {
+      var title = $(this).data('title');
+      var isSaved = watchlist.find(m => m.title === title);
+      if (isSaved) {
+        $(this).removeClass('btn-outline-light').addClass('btn-danger');
+        $(this).find('.icon').text('💔');
+        $(this).find('.text').text('Xóa khỏi Yêu thích');
+      } else {
+        $(this).removeClass('btn-danger').addClass('btn-outline-light');
+        $(this).find('.icon').text('❤️');
+        $(this).find('.text').text('Thêm vào Yêu thích');
+      }
+    });
+  }
+
+  updateWatchlistButtons();
+
+  $('.btn-watchlist').click(function() {
+    var title = $(this).data('title');
+    var poster = $(this).data('poster');
+    var watchlist = JSON.parse(localStorage.getItem('movieWatchlist')) || [];
+    
+    var existingIndex = watchlist.findIndex(m => m.title === title);
+    if (existingIndex > -1) {
+      watchlist.splice(existingIndex, 1);
+    } else {
+      watchlist.push({title: title, poster: poster});
+    }
+    
+    localStorage.setItem('movieWatchlist', JSON.stringify(watchlist));
+    updateWatchlistButtons();
+  });
+});
+
+// ================= RATING LOGIC =================
+$(document).ready(function() {
+  function updateStars(container, rating) {
+    container.find('.star').each(function() {
+      var starValue = $(this).data('value');
+      if (starValue <= rating) {
+        $(this).removeClass('fa-star-o').addClass('fa-star');
+      } else {
+        $(this).removeClass('fa-star').addClass('fa-star-o');
+      }
+    });
+  }
+
+  $('.star-rating').each(function() {
+    var title = $(this).data('title');
+    var ratings = JSON.parse(localStorage.getItem('movieRatings')) || {};
+    var currentRating = ratings[title] || 0;
+    updateStars($(this), currentRating);
+  });
+
+  $('.star-rating .star').hover(
+    function() {
+      var hoverValue = $(this).data('value');
+      var container = $(this).parent();
+      updateStars(container, hoverValue);
+    },
+    function() {
+      var container = $(this).parent();
+      var title = container.data('title');
+      var ratings = JSON.parse(localStorage.getItem('movieRatings')) || {};
+      var currentRating = ratings[title] || 0;
+      updateStars(container, currentRating);
+    }
+  );
+
+  $('.star-rating .star').click(function() {
+    var value = $(this).data('value');
+    var container = $(this).parent();
+    var title = container.data('title');
+    
+    var ratings = JSON.parse(localStorage.getItem('movieRatings')) || {};
+    ratings[title] = value;
+    localStorage.setItem('movieRatings', JSON.stringify(ratings));
+    
+    updateStars(container, value);
+  });
+});
+

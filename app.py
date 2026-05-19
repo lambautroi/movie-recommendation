@@ -68,16 +68,33 @@ app = Flask(__name__)
 @app.route("/")
 @app.route("/home")
 def home():
+    genre = request.args.get('genre')
     suggestions = get_suggestions()
     
     # Lấy 12 phim ngẫu nhiên từ database để đưa ra trang chủ
     conn = sqlite3.connect('Artifacts/movies.db')
     c = conn.cursor()
-    c.execute("SELECT movie_title FROM movies ORDER BY RANDOM() LIMIT 12")
+    if genre:
+        c.execute("SELECT movie_title FROM movies WHERE genres LIKE ? ORDER BY RANDOM() LIMIT 12", ('%'+genre+'%',))
+    else:
+        c.execute("SELECT movie_title FROM movies ORDER BY RANDOM() LIMIT 12")
     random_movies = [row[0] for row in c.fetchall()]
     conn.close()
     
-    return render_template('home.html', suggestions=suggestions, random_movies=random_movies)
+    return render_template('home.html', suggestions=suggestions, random_movies=random_movies, current_genre=genre)
+
+@app.route("/load_more")
+def load_more():
+    genre = request.args.get('genre')
+    conn = sqlite3.connect('Artifacts/movies.db')
+    c = conn.cursor()
+    if genre:
+        c.execute("SELECT movie_title FROM movies WHERE genres LIKE ? ORDER BY RANDOM() LIMIT 12", ('%'+genre+'%',))
+    else:
+        c.execute("SELECT movie_title FROM movies ORDER BY RANDOM() LIMIT 12")
+    movies = [row[0] for row in c.fetchall()]
+    conn.close()
+    return {'movies': movies}
 
 @app.route("/similarity",methods=["POST"])
 def similarity():
@@ -93,6 +110,7 @@ def similarity():
 def recommend():
     # getting data from AJAX request
     title = request.form['title']
+    trailer_key = request.form.get('trailer_key', '')
     cast_ids = request.form['cast_ids']
     cast_names = request.form['cast_names']
     cast_chars = request.form['cast_chars']
@@ -163,7 +181,7 @@ def recommend():
     # passing all the data to the html file
     return render_template('recommend.html',title=title,poster=poster,overview=overview,vote_average=vote_average,
         vote_count=vote_count,release_date=release_date,runtime=runtime,status=status,genres=genres,
-        movie_cards=movie_cards,reviews=movie_reviews,casts=casts,cast_details=cast_details)
+        movie_cards=movie_cards,reviews=movie_reviews,casts=casts,cast_details=cast_details,trailer_key=trailer_key)
 
 if __name__ == '__main__':
     app.run(debug=True,host="0.0.0.0",port=5000)

@@ -16,8 +16,13 @@
 </head>
 
 <body id="content" style="font-family: 'Noto Sans JP', sans-serif;">
-	<div class="ml-container" style="display: block;">
-    <center><h1 style=""> Hệ thống gợi ý phim</h1></center>
+	<div class="ml-container" style="display: block; position: relative;">
+    <div style="position: absolute; top: 20px; right: 20px; z-index: 1000;">
+      <button type="button" class="btn btn-outline-danger" data-toggle="modal" data-target="#watchlistModal" style="font-weight: bold; background-color: rgba(0,0,0,0.5);">
+        ❤️ Phim Yêu Thích
+      </button>
+    </div>
+    <center><h1 style="padding-top: 30px;"> Hệ thống gợi ý phim</h1></center>
     <div class="form-group shadow-textarea" style="margin-top: 30px;text-align: center;color: white;">
         <input type="text" name="movie" class="movie form-control" id="autoComplete" autocomplete="off" placeholder="Nhập tên phim" style="background-color: #ffffff;border-color:#ffffff;width: 60%;color: #181818" required="required" />
         <br>
@@ -38,10 +43,34 @@
     </center>
 	</div>
 
+  <!-- Bắt đầu phần Gợi ý Cá nhân hóa -->
+  <div class="personalized-movies" id="personalized-section" style="margin-top: 50px; display: none;">
+    <center>
+      <h2 style="color: #e50914; margin-bottom: 5px; font-weight: bold;">🔥 DÀNH RIÊNG CHO BẠN</h2>
+      <p style="color: #aaa; margin-bottom: 20px; font-style: italic;">Gợi ý dựa trên danh sách phim yêu thích của bạn</p>
+    </center>
+    <div class="movie-content" id="personalized-grid" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; max-width: 1200px; margin: 0 auto;">
+      <!-- Các phim gợi ý cá nhân hóa sẽ được JS điền vào đây -->
+      <center><div id="loader-personal" style="color: white; padding: 20px;">Đang phân tích và tìm kiếm phim phù hợp...</div></center>
+    </div>
+  </div>
+  <!-- Kết thúc phần Gợi ý Cá nhân hóa -->
+
   <!-- Bắt đầu phần phim ngẫu nhiên -->
   {% if random_movies %}
+  <!-- Bắt đầu phần Filter -->
+  <div class="category-filter" style="text-align: center; margin-top: 30px;">
+    <h5 style="color: white; margin-bottom: 15px;">Lọc theo thể loại:</h5>
+    <a href="/home" class="btn {% if not current_genre %}btn-danger{% else %}btn-outline-light{% endif %} btn-sm m-1">Tất cả</a>
+    <a href="/home?genre=Action" class="btn {% if current_genre == 'Action' %}btn-danger{% else %}btn-outline-light{% endif %} btn-sm m-1">Hành động</a>
+    <a href="/home?genre=Comedy" class="btn {% if current_genre == 'Comedy' %}btn-danger{% else %}btn-outline-light{% endif %} btn-sm m-1">Hài hước</a>
+    <a href="/home?genre=Romance" class="btn {% if current_genre == 'Romance' %}btn-danger{% else %}btn-outline-light{% endif %} btn-sm m-1">Tình cảm</a>
+    <a href="/home?genre=Horror" class="btn {% if current_genre == 'Horror' %}btn-danger{% else %}btn-outline-light{% endif %} btn-sm m-1">Kinh dị</a>
+    <a href="/home?genre=Science Fiction" class="btn {% if current_genre == 'Science Fiction' %}btn-danger{% else %}btn-outline-light{% endif %} btn-sm m-1">Viễn tưởng</a>
+  </div>
+  
   <div class="random-movies" style="margin-top: 50px;">
-    <center><h2 style="color: white; margin-bottom: 20px;">KHÁM PHÁ PHIM</h2></center>
+    <center><h2 style="color: white; margin-bottom: 20px;" class="text-uppercase">{% if current_genre %}PHIM {{ current_genre }}{% else %}KHÁM PHÁ PHIM{% endif %}</h2></center>
     <div class="movie-content" id="random-movies-grid" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; max-width: 1200px; margin: 0 auto;">
       <!-- Các phim sẽ được JS điền vào đây -->
     </div>
@@ -85,10 +114,188 @@
   {% endif %}
   <!-- Kết thúc phần phim ngẫu nhiên -->
 
+  <!-- Watchlist Modal -->
+  <div class="modal fade" id="watchlistModal" tabindex="-1" role="dialog" aria-labelledby="watchlistModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content" style="background-color: #141414; color: white;">
+        <div class="modal-header" style="border-bottom: 1px solid #333;">
+          <h5 class="modal-title" id="watchlistModalLabel" style="font-weight: bold;">❤️ Danh Sách Phim Yêu Thích</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: white;">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div id="watchlist-grid" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px;">
+            <!-- Danh sách yêu thích render ở đây -->
+          </div>
+          <div id="watchlist-empty" style="text-align: center; display: none; padding: 30px;">
+            <h5 style="color: #aaa;">Bạn chưa lưu bộ phim nào.</h5>
+            <p>Hãy tìm kiếm phim và nhấn nút "Thêm vào Yêu thích" nhé!</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 	<script src="https://cdn.jsdelivr.net/npm/@tarekraafat/autocomplete.js@7.2.0/dist/js/autoComplete.min.js"></script>
   <script type="text/javascript" src="{{url_for('static', filename='autocomplete.js')}}"></script>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <script type="text/javascript" src="{{url_for('static', filename='recommend.js')}}"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+  
+  <script>
+    $(document).ready(function() {
+      // 1. Render Watchlist Modal
+      $('#watchlistModal').on('show.bs.modal', function () {
+        var watchlist = JSON.parse(localStorage.getItem('movieWatchlist')) || [];
+        var grid = $('#watchlist-grid');
+        grid.empty();
+        if (watchlist.length === 0) {
+          $('#watchlist-empty').show();
+        } else {
+          $('#watchlist-empty').hide();
+          watchlist.forEach(function(movie) {
+            var card = `
+              <div class="card" style="width: 12rem; cursor: pointer;" title="${movie.title}" onclick="recommendcard(this)">
+                <div class="imghvr">
+                  <img class="card-img-top" height="280" width="100%" src="${movie.poster}" alt="${movie.title}">
+                  <figcaption class="fig">
+                    <button class="card-btn btn btn-danger btn-sm"> Xem ngay </button>
+                  </figcaption>
+                </div>
+                <div class="card-body" style="padding: 10px;">
+                  <h6 class="card-title" style="color: black; font-weight: bold; text-align: center; margin: 0;">${movie.title}</h6>
+                </div>
+              </div>
+            `;
+            grid.append(card);
+          });
+        }
+      });
+
+      // 2. Personalized Recommendations
+      var watchlist = JSON.parse(localStorage.getItem('movieWatchlist')) || [];
+      var ratings = JSON.parse(localStorage.getItem('movieRatings')) || {};
+      
+      var favoriteMovies = [...watchlist.map(m => m.title)];
+      for (var title in ratings) {
+        if (ratings[title] >= 4 && !favoriteMovies.includes(title)) {
+          favoriteMovies.push(title);
+        }
+      }
+
+      if (favoriteMovies.length > 0) {
+        $('#personalized-section').show();
+        // Lấy ngẫu nhiên 1 phim trong danh sách yêu thích/đánh giá cao làm seed
+        var randomSeedMovie = favoriteMovies[Math.floor(Math.random() * favoriteMovies.length)];
+        
+        $.ajax({
+          type:'POST',
+          url:'/similarity',
+          data:{'name': randomSeedMovie},
+          success: function(recs){
+            $('#loader-personal').hide();
+            if(!recs.startsWith("Xin lỗi!")){
+              var movie_arr = recs.split('---');
+              // Lấy 6 phim
+              var count = Math.min(6, movie_arr.length);
+              var grid = $('#personalized-grid');
+              
+              var my_api_key = '5ce2ef2d7c461dea5b4e04900d1c561e';
+              
+              for(var i=0; i<count; i++) {
+                let title = movie_arr[i];
+                $.ajax({
+                  type: 'GET',
+                  url: 'https://api.themoviedb.org/3/search/movie?api_key='+my_api_key+'&query='+title,
+                  success: function(m_data) {
+                    var poster_url = 'https://via.placeholder.com/360x240?text=Khong+Co+Anh';
+                    if(m_data.results && m_data.results.length > 0 && m_data.results[0].poster_path) {
+                      poster_url = 'https://image.tmdb.org/t/p/original' + m_data.results[0].poster_path;
+                    }
+                    var card = `
+                      <div class="card" style="width: 15rem; cursor: pointer; border: 2px solid #e50914;" title="${title}" onclick="recommendcard(this)">
+                        <div class="imghvr">
+                          <img class="card-img-top" height="360" width="240" src="${poster_url}" alt="${title}">
+                          <figcaption class="fig">
+                            <button class="card-btn btn btn-danger"> Xem ngay </button>
+                          </figcaption>
+                        </div>
+                        <div class="card-body">
+                          <h5 class="card-title" style="color: black; font-weight: bold; text-align: center;">${title}</h5>
+                        </div>
+                      </div>
+                    `;
+                    grid.append(card);
+                  }
+                });
+              }
+            }
+          }
+        });
+      }
+
+      // 3. Infinite Scroll
+      var isLoading = false;
+      $(window).scroll(function() {
+        if ($(window).scrollTop() + $(window).height() >= $(document).height() - 200) {
+          if (!isLoading) {
+            isLoading = true;
+            $('#random-movies-grid').append('<center id="infinite-loader" style="width: 100%; color: white; padding: 20px;">Đang tải thêm phim...</center>');
+            
+            var currentParams = new URLSearchParams(window.location.search);
+            var genre = currentParams.get('genre') || '';
+            
+            $.ajax({
+              type: 'GET',
+              url: '/load_more?genre=' + encodeURIComponent(genre),
+              success: function(data) {
+                $('#infinite-loader').remove();
+                if (data.movies && data.movies.length > 0) {
+                  var my_api_key = '5ce2ef2d7c461dea5b4e04900d1c561e';
+                  data.movies.forEach(function(title) {
+                    $.ajax({
+                      type: 'GET',
+                      url: 'https://api.themoviedb.org/3/search/movie?api_key='+my_api_key+'&query='+encodeURIComponent(title),
+                      success: function(m_data) {
+                        var poster_url = 'https://via.placeholder.com/360x240?text=Khong+Co+Anh';
+                        if(m_data.results && m_data.results.length > 0 && m_data.results[0].poster_path) {
+                          poster_url = 'https://image.tmdb.org/t/p/original' + m_data.results[0].poster_path;
+                        }
+                        var card = `
+                          <div class="card" style="width: 15rem; cursor: pointer;" title="${title}" onclick="recommendcard(this)">
+                            <div class="imghvr">
+                              <img class="card-img-top" height="360" width="240" src="${poster_url}" alt="${title}">
+                              <figcaption class="fig">
+                                <button class="card-btn btn btn-danger"> Xem ngay </button>
+                              </figcaption>
+                            </div>
+                            <div class="card-body">
+                              <h5 class="card-title" style="color: black; font-weight: bold; text-align: center;">${title}</h5>
+                            </div>
+                          </div>
+                        `;
+                        $('#random-movies-grid').append(card);
+                      }
+                    });
+                  });
+                  setTimeout(function() { isLoading = false; }, 1000); // Prevent rapid firing
+                } else {
+                  isLoading = false;
+                }
+              },
+              error: function() {
+                $('#infinite-loader').remove();
+                isLoading = false;
+              }
+            });
+          }
+        }
+      });
+    });
+  </script>
+
   <footer style="text-align: center; color: white; margin-top: 50px; padding: 20px; background-color: #141414;">
     <p>Đề tài: Hệ thống gợi ý phim</p>
     <p>Giảng viên hướng dẫn: Đào Thị Thúy Quỳnh</p>
